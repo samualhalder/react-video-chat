@@ -1,0 +1,42 @@
+services:
+  server:
+    build: ./server
+    ports:
+      - 8080:8080
+    env_file:
+      ./server/.env
+    develop:
+      watch :
+        - action: sync
+          path: ./server
+          target: ./app
+        - action: rebuild
+          path: ./server/package.json
+  client:
+    build: ./client
+    ports:
+      - 5173:5173
+    env_file:
+      ./client/.env
+    depends_on:
+      - server
+    command: npm run dev -- --host
+    develop:
+      watch:
+        - action: sync
+          path: ./client/src
+          target: ./app/src
+        - action: rebuild
+          path: ./client/package.json
+
+
+
+
+#   database:
+#     image: mongo:4.0-xenial
+#     ports:
+#       - 27017:27017
+#     volumes:
+#       - data:/data/db
+# volumes:
+#   data:
