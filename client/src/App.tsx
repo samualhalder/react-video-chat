@@ -1,9 +1,19 @@
-import "./App.css";
-
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Home from "./pages/Home";
+import { SocketContext } from "./Context/SocketContext";
+import { io } from "socket.io-client";
+import { useMemo } from "react";
 function App() {
+  const socket = useMemo(() => io("http://localhost:8081"), []);
   return (
     <>
-      <h1 className="text-red-400">hell mf</h1>
+      <BrowserRouter>
+        <SocketContext.Provider value={{ socket }}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+          </Routes>
+        </SocketContext.Provider>
+      </BrowserRouter>
     </>
   );
 }
