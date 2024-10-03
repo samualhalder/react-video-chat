@@ -9,16 +9,15 @@ const app = (0, express_1.default)();
 app.use(express_1.default.json());
 const io = new socket_io_1.Server({
     cors: {
-        origin: "*", // Allow all origins, you can specify your frontend origin here
+        origin: "*",
         methods: ["GET", "POST"],
     },
 });
 const userToRoomIdMap = new Map();
 io.on("connection", (socket) => {
     console.log("connection done");
-    socket.on("join-room", ({ data }) => {
-        console.log(data);
-        const { roomId, email } = data;
+    socket.on("join-room", ({ roomId, email }) => {
+        console.log(email, roomId);
         userToRoomIdMap.set(email, roomId);
         socket.join(roomId);
         socket.broadcast.to(roomId).emit("new user join", { email });
