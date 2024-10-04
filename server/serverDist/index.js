@@ -13,14 +13,17 @@ const io = new socket_io_1.Server({
         methods: ["GET", "POST"],
     },
 });
-const userToRoomIdMap = new Map();
+const emailToSocketId = new Map();
+const socketIdToEmail = new Map();
 io.on("connection", (socket) => {
     console.log("connection done");
     socket.on("join-room", ({ roomId, email }) => {
         console.log(email, roomId);
-        userToRoomIdMap.set(email, roomId);
+        emailToSocketId.set(email, socket.id);
+        socketIdToEmail.set(socket.id, email);
+        io.to(roomId).emit("joined-room", { email, socketId: socket.id });
         socket.join(roomId);
-        socket.broadcast.to(roomId).emit("new user join", { email });
+        io.to(socket.id).emit("join-room", { email, roomId });
     });
 });
 app.listen(8080, () => {

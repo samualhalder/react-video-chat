@@ -11,7 +11,8 @@ const io = new Server({
   },
 });
 
-const userToRoomIdMap = new Map();
+const emailToSocketId = new Map<string, string>();
+const socketIdToEmail = new Map<string, string>();
 
 io.on("connection", (socket) => {
   console.log("connection done");
@@ -19,10 +20,11 @@ io.on("connection", (socket) => {
     "join-room",
     ({ roomId, email }: { roomId: string; email: string }) => {
       console.log(email, roomId);
-
-      userToRoomIdMap.set(email, roomId);
+      emailToSocketId.set(email, socket.id);
+      socketIdToEmail.set(socket.id, email);
+      io.to(roomId).emit("joined-room", { email, socketId: socket.id });
       socket.join(roomId);
-      socket.broadcast.to(roomId).emit("new user join", { email });
+      io.to(socket.id).emit("join-room", { email, roomId });
     }
   );
 });
