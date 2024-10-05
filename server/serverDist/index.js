@@ -18,7 +18,6 @@ const socketIdToEmail = new Map();
 io.on("connection", (socket) => {
     console.log("connection done");
     socket.on("join-room", ({ roomId, email }) => {
-        console.log(email, roomId);
         emailToSocketId.set(email, socket.id);
         socketIdToEmail.set(socket.id, email);
         io.to(roomId).emit("joined-room", { email, socketId: socket.id });

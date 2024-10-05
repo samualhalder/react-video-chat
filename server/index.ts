@@ -19,7 +19,6 @@ io.on("connection", (socket) => {
   socket.on(
     "join-room",
     ({ roomId, email }: { roomId: string; email: string }) => {
-      console.log(email, roomId);
       emailToSocketId.set(email, socket.id);
       socketIdToEmail.set(socket.id, email);
       io.to(roomId).emit("joined-room", { email, socketId: socket.id });
