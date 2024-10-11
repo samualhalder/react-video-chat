@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useSocket } from "../Context/SocketContext";
+import peer from "../services/peer";
 import { Button } from "flowbite-react";
 import ReactPlayer from "react-player";
 
@@ -9,24 +10,53 @@ export default function Room() {
   const { socket } = useSocket();
   const [remoteSockerId, setRemoteSockerId] = useState<string | null>(null);
   const [myStream, setMyStream] = useState<MediaStream | null>(null);
-  const handleJoinedRoom = useCallback((data) => {
-    setRemoteSockerId(data.socketId);
-    console.log("hit", data);
-  }, []);
+  const handleJoinedRoom = useCallback(
+    ({ email, socketId }: { email: string; socketId: string }) => {
+      setRemoteSockerId(socketId);
+
+      console.log("remote socket id", email, remoteSockerId, socketId);
+
+      console.log("hit");
+    },
+    [remoteSockerId]
+  );
 
   const handleUserCall = useCallback(async () => {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: true,
     });
+    const offer = await peer.getOffer();
+    console.log("call to", remoteSockerId);
+
+    socket.emit("user-call", { to: remoteSockerId, offer });
+
     setMyStream(stream);
-  }, []);
+  }, [remoteSockerId, socket]);
+  const handleIncomingCall = useCallback(
+    ({
+      from,
+      offer,
+    }: {
+      from: string;
+      offer: RTCLocalSessionDescriptionInit;
+    }) => {
+      console.log("hit");
+
+      console.log("incoming call from", from, offer);
+    },
+    []
+  );
+
   useEffect(() => {
     socket.on("joined-room", handleJoinedRoom);
+    socket.on("incoming-call", handleIncomingCall);
     return () => {
       socket.off("joined-room", handleJoinedRoom);
+      socket.off("incoming-call", handleIncomingCall);
     };
-  }, [socket, handleJoinedRoom]);
+  }, [socket, handleJoinedRoom, handleIncomingCall]);
+
   return (
     <>
       <div className="h-screen flex flex-col items-center gap-4">

@@ -21,11 +21,14 @@ export default function Home() {
     []
   );
   useEffect(() => {
+    socket.on("connect", () => {
+      console.log("connected with id ", socket.id);
+    });
     socket.on("join-room", handleJoinRoom);
     return () => {
       socket.off("join-room", handleJoinRoom);
     };
-  }, [socket, handleJoinRoom]);
+  }, [handleJoinRoom]);
   return (
     <div className="h-screen w-full">
       <form

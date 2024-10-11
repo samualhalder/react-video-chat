@@ -15,7 +15,7 @@ const emailToSocketId = new Map<string, string>();
 const socketIdToEmail = new Map<string, string>();
 
 io.on("connection", (socket) => {
-  console.log("connection done");
+  console.log("connection done", socket.id);
   socket.on(
     "join-room",
     ({ roomId, email }: { roomId: string; email: string }) => {
@@ -26,6 +26,11 @@ io.on("connection", (socket) => {
       io.to(socket.id).emit("join-room", { email, roomId });
     }
   );
+  socket.on("user-call", ({ to, offer }) => {
+    console.log("call form", socket.id, "to", to, offer);
+
+    io.to(to).emit("incoming-call", { from: socket.id, offer });
+  });
 });
 
 app.listen(8080, () => {

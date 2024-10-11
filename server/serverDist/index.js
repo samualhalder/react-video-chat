@@ -16,13 +16,17 @@ const io = new socket_io_1.Server({
 const emailToSocketId = new Map();
 const socketIdToEmail = new Map();
 io.on("connection", (socket) => {
-    console.log("connection done");
+    console.log("connection done", socket.id);
     socket.on("join-room", ({ roomId, email }) => {
         emailToSocketId.set(email, socket.id);
         socketIdToEmail.set(socket.id, email);
         io.to(roomId).emit("joined-room", { email, socketId: socket.id });
         socket.join(roomId);
         io.to(socket.id).emit("join-room", { email, roomId });
+    });
+    socket.on("user-call", ({ to, offer }) => {
+        console.log("call form", socket.id, "to", to, offer);
+        io.to(to).emit("incoming-call", { from: socket.id, offer });
     });
 });
 app.listen(8080, () => {
