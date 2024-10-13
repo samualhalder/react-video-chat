@@ -31,6 +31,9 @@ io.on("connection", (socket) => {
 
     io.to(to).emit("incoming-call", { from: socket.id, offer });
   });
+  socket.on("call-accepted", ({ to, ans }) => {
+    io.to(to).emit("call-accepted", { from: socket.id, ans });
+  });
 });
 
 app.listen(8080, () => {

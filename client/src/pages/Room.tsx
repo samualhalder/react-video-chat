@@ -10,6 +10,7 @@ export default function Room() {
   const { socket } = useSocket();
   const [remoteSockerId, setRemoteSockerId] = useState<string | null>(null);
   const [myStream, setMyStream] = useState<MediaStream | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const handleJoinedRoom = useCallback(
     ({ email, socketId }: { email: string; socketId: string }) => {
       setRemoteSockerId(socketId);
@@ -33,29 +34,56 @@ export default function Room() {
 
     setMyStream(stream);
   }, [remoteSockerId, socket]);
+
   const handleIncomingCall = useCallback(
-    ({
+    async ({
       from,
       offer,
     }: {
       from: string;
-      offer: RTCLocalSessionDescriptionInit;
+      offer: RTCSessionDescriptionInit;
     }) => {
-      console.log("hit");
+      console.log("incoming call from ", from, offer);
 
-      console.log("incoming call from", from, offer);
+      setRemoteSockerId(from);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true,
+      });
+
+      setMyStream(stream);
+      const ans = await peer.getAnswear(offer);
+      console.log(ans);
+
+      socket.emit("call-accepted", { to: from, ans });
     },
-    []
+    [socket]
   );
+
+  const handleCallAccepted = useCallback(({ from, ans }) => {
+    peer.setLocalDescription(ans);
+    console.log("call accepted", from, ans);
+    for (const track of myStream?.getTracks()) {
+      peer.peer?.addTrack(track, myStream);
+    }
+  }, []);
+
+  useEffect(() => {
+    peer.peer?.addEventListener("track", (ev) =>
+      setRemoteStream(ev.streams[0])
+    );
+  }, []);
 
   useEffect(() => {
     socket.on("joined-room", handleJoinedRoom);
     socket.on("incoming-call", handleIncomingCall);
+    socket.on("call-accepted", handleCallAccepted);
     return () => {
       socket.off("joined-room", handleJoinedRoom);
       socket.off("incoming-call", handleIncomingCall);
+      socket.off("call-accepted", handleCallAccepted);
     };
-  }, [socket, handleJoinedRoom, handleIncomingCall]);
+  }, [socket, handleJoinedRoom, handleIncomingCall, handleCallAccepted]);
 
   return (
     <>
